@@ -4,53 +4,31 @@ import (
 	"gin-money-manager-api/modules/shared/helper"
 	"gin-money-manager-api/modules/shared/response"
 	"gin-money-manager-api/modules/user/dto"
-	"gin-money-manager-api/modules/user/entity"
-	"gin-money-manager-api/modules/user/repository"
+	"gin-money-manager-api/modules/user/service"
 
 	"github.com/gin-gonic/gin"
 )
 
 type CreateUser struct {
-	userRepository repository.UserRepository
-	roleRepository repository.RoleRepository
+	creator service.UserCreatorService
 }
 
 func NewCreateUser(
-	userRepository repository.UserRepository,
-	roleRepository repository.RoleRepository,
+	creator *service.UserCreatorService,
 ) *CreateUser {
 	return &CreateUser{
-		userRepository: userRepository,
-		roleRepository: roleRepository,
+		creator: *creator,
 	}
 }
 
 func (h *CreateUser) Handler(c *gin.Context) {
 	var body dto.CreateUserRequest
-	var roles []entity.Role
 
 	if !helper.BindAndValidate(c, &body) {
 		return
 	}
 
-	h.roleRepository.DB().Where("id IN ?", body.Roles).Find(&roles)
-
-	hashedPassword, err := helper.HashPassword(body.Password)
-
-	if err != nil {
-		response.ServerError(c, err.Error())
-		return
-	}
-
-	newUser := entity.User{
-		Name:     body.Name,
-		Username: body.Username,
-		Email:    body.Email,
-		Password: hashedPassword,
-		Roles:    roles,
-	}
-
-	user, err := h.userRepository.Create(newUser)
+	user, err := h.creator.CreateUser(&body)
 
 	response.Created(c, user, err)
 }

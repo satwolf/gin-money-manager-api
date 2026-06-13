@@ -1,17 +1,13 @@
 package container
 
 import (
-	"gin-money-manager-api/modules/user/command"
 	"gin-money-manager-api/modules/user/repository"
-	"gin-money-manager-api/modules/user/resource"
+	"gin-money-manager-api/modules/user/service"
 )
 
 type UserContainer struct {
 	RoleRepository repository.RoleRepository
 	UserRepository repository.UserRepository
 
-	RoleResource *resource.RoleResource
-	UserResource *resource.UserResource
-
-	CreateUser *command.CreateUser
+	UserCreatorService service.UserCreatorService
 }
