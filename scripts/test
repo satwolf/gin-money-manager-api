@@ -1,0 +1,8 @@
+#!/bin/bash
+
+echo "Running all command layer tests..."
+
+go test ./modules/auth/command
+go test ./modules/user/command
+
+echo "Done."

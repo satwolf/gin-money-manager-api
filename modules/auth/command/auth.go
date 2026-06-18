@@ -5,20 +5,22 @@ import (
 	"gin-money-manager-api/modules/auth/service"
 	"gin-money-manager-api/modules/shared/helper"
 	"gin-money-manager-api/modules/shared/response"
-	"gin-money-manager-api/modules/user/repository"
+	"gin-money-manager-api/modules/user/entity"
 
 	"github.com/gin-gonic/gin"
 )
 
-type AuthCommand struct {
-	userRepository repository.UserRepository
+type UserFinder interface {
+	FindByUsername(username string) (*entity.User, error)
 }
 
-func NewAuthCommand(
-	userRepository repository.UserRepository,
-) *AuthCommand {
+type AuthCommand struct {
+	userRepository UserFinder
+}
+
+func NewAuthCommand(repository UserFinder) *AuthCommand {
 	return &AuthCommand{
-		userRepository: userRepository,
+		userRepository: repository,
 	}
 }
 
@@ -35,8 +37,9 @@ func (command *AuthCommand) Handler(
 		body.Username,
 	)
 
-	if err != nil {
-		response.ServerError(c, err.Error())
+	if err != nil || user == nil {
+		response.ServerError(c, "user not found")
+		return
 	}
 
 	if !helper.CheckPassword(
@@ -44,6 +47,7 @@ func (command *AuthCommand) Handler(
 		user.Password,
 	) {
 		response.ServerError(c, err.Error())
+		return
 	}
 
 	token, err := service.GenerateToken(
@@ -53,6 +57,7 @@ func (command *AuthCommand) Handler(
 
 	if err != nil {
 		response.ServerError(c, err.Error())
+		return
 	}
 
 	response.Success(
